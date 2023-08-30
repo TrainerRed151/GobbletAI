@@ -28,7 +28,7 @@ class Gobblet:
 
         for a in [-1, 1]:
             for i in range(4):
-                if sum(b[i] > 0) == 4:
+                if sum(a*b[i] > 0) == 4:
                     return a
 
                 if sum(a*b[:,i] > 0) == 4:
@@ -40,7 +40,8 @@ class Gobblet:
         return 0
 
     def move(self, coords):
-        if coords in self.legal_moves():
+        if coords not in self.legal_moves():
+            import ipdb; ipdb.set_trace()
             return False
 
         r1, c1, r2, c2 = coords
@@ -53,6 +54,16 @@ class Gobblet:
 
         self.turn = (self.turn + 1) % 2
         return True
+
+    def undo_move(self, coords):
+        self.turn = (self.turn + 1) % 2
+        r2, c2, r1, c1 = coords
+
+        if r2 == -1:
+           self.stage[self.turn][c2].append(self.board[r1][c1].pop())
+
+        else:
+            self.board[r2][c2].append(self.board[r1][c1].pop())
 
     def legal_moves(self):
         moves = []
@@ -86,6 +97,42 @@ class Gobblet:
 
         return moves
 
+    def minmax(self, depth, alpha, beta):
+        if self.is_mate():
+            return -1 if self.turn else 1, None
+
+        if depth == 0:
+            return 0, None
+
+        best_score = -2 if self.turn else 2
+        best_move = None
+
+        for move in self.legal_moves():
+            self.move(move)
+            value, _ = self.minmax(depth - 1, alpha, beta)
+            self.undo_move(move)
+
+            if self.turn:
+                if value > best_score:
+                    best_score, best_move = value, move
+
+                if value >= beta:
+                    break
+                alpha = max(value, alpha)
+
+            else:
+                if value < best_score:
+                    best_score, best_move = value, move
+
+                if value <= alpha:
+                    break
+                beta = min(value, beta)
+
+        return best_score, best_move
+
+    def ai(self, depth=4):
+        return self.minmax(depth, -1, 1)
+
     def display(self):
         print(self.to_array())
         print(self.stage)
@@ -101,11 +148,12 @@ if __name__ == '__main__':
     while True:
         print(f'Turn: {game.get_turn()}')
         #print(f'Legal Moves: {game.legal_moves()}')
+        print(f'AI: {game.ai()}')
         move = input('Move: ')
         if move == 'end':
             break
 
-        coords = [int(x) for x in move.split(',')]
+        coords = tuple([int(x) for x in move.split(',')])
 
         if not game.move(coords):
             print('Illegal move')
