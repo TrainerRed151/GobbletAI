@@ -34,8 +34,11 @@ class Gobblet:
                 if sum(a*b[:,i] > 0) == 4:
                     return a
 
-                if sum(a*b.diagonal() > 0) == 4:
-                    return a
+            if sum(a*b.diagonal() > 0) == 4:
+                return a
+
+            if a*b[0, 3] > 0 and a*b[1, 2] > 0 and a*b[2, 1] > 0 and a*b[3, 0] > 0:
+                return a
 
         return 0
 
@@ -130,7 +133,7 @@ class Gobblet:
 
         return best_score, best_move
 
-    def ai(self, depth=4):
+    def ai(self, depth=5):
         return self.minmax(depth, -1, 1)
 
     def display(self):
