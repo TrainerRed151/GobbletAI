@@ -44,7 +44,6 @@ class Gobblet:
 
     def move(self, coords):
         if coords not in self.legal_moves():
-            import ipdb; ipdb.set_trace()
             return False
 
         r1, c1, r2, c2 = coords
@@ -133,7 +132,7 @@ class Gobblet:
 
         return best_score, best_move
 
-    def ai(self, depth=5):
+    def ai(self, depth=4):
         return self.minmax(depth, -1, 1)
 
     def display(self):
@@ -146,23 +145,29 @@ class Gobblet:
 
 if __name__ == '__main__':
     game = Gobblet()
-    game.display()
+    coords = None
 
     while True:
+        game.display()
         print(f'Turn: {game.get_turn()}')
-        #print(f'Legal Moves: {game.legal_moves()}')
-        print(f'AI: {game.ai()}')
         move = input('Move: ')
         if move == 'end':
             break
 
-        coords = tuple([int(x) for x in move.split(',')])
+        elif move == 'undo':
+            game.undo_move(coords)
+            continue
+
+        elif move == 'ai':
+            score, coords = game.ai()
+            print(f'AI: {coords} [{score}]')
+
+        else:
+            coords = tuple([int(x) for x in move.split(',')])
 
         if not game.move(coords):
             print('Illegal move')
             continue
-
-        game.display()
 
         if game.is_mate():
             side = game.get_turn() + 1 % 2
