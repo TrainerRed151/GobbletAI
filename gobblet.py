@@ -1,6 +1,6 @@
 # Copyright © 2023 Brian Pomerantz. All Rights Reserved.
 
-import numpy as np
+import time
 
 class Gobblet:
     def __init__(self):
@@ -11,36 +11,35 @@ class Gobblet:
         ]
         self.turn = 0
 
-    def to_array(self):
-        b = []
-        for row in self.board:
-            b.append([])
-            for stack in row:
-                if len(stack) == 0:
-                    b[-1].append(0)
-                else:
-                    b[-1].append(stack[-1])
-
-        return np.array(b)
-
     def is_mate(self):
-        b = self.to_array()
+        val = -1 if self.turn == 0 else 1
 
-        for a in [-1, 1]:
-            for i in range(4):
-                if sum(a*b[i] > 0) == 4:
-                    return a
+        for i in range(4):
+            if (len(self.board[i][0]) != 0 and val*self.board[i][0][-1] > 0
+                    and len(self.board[i][1]) != 0 and val*self.board[i][1][-1] > 0
+                    and len(self.board[i][2]) != 0 and val*self.board[i][2][-1] > 0
+                    and len(self.board[i][3]) != 0 and val*self.board[i][3][-1] > 0):
+                return True
 
-                if sum(a*b[:,i] > 0) == 4:
-                    return a
+            if (len(self.board[0][i]) != 0 and val*self.board[0][i][-1] > 0
+                    and len(self.board[1][i]) != 0 and val*self.board[1][i][-1] > 0
+                    and len(self.board[2][i]) != 0 and val*self.board[2][i][-1] > 0
+                    and len(self.board[3][i]) != 0 and val*self.board[3][i][-1] > 0):
+                return True
 
-            if sum(a*b.diagonal() > 0) == 4:
-                return a
+        if (len(self.board[0][0]) != 0 and val*self.board[0][0][-1] > 0
+                and len(self.board[1][1]) != 0 and val*self.board[1][1][-1] > 0
+                and len(self.board[2][2]) != 0 and val*self.board[2][2][-1] > 0
+                and len(self.board[3][3]) != 0 and val*self.board[3][3][-1] > 0):
+            return True
 
-            if a*b[0, 3] > 0 and a*b[1, 2] > 0 and a*b[2, 1] > 0 and a*b[3, 0] > 0:
-                return a
+        if (len(self.board[0][3]) != 0 and val*self.board[0][3][-1] > 0
+                and len(self.board[1][2]) != 0 and val*self.board[1][2][-1] > 0
+                and len(self.board[2][1]) != 0 and val*self.board[2][1][-1] > 0
+                and len(self.board[3][0]) != 0 and val*self.board[3][0][-1] > 0):
+            return True
 
-        return 0
+        return False
 
     def move(self, coords):
         if coords not in self.legal_moves():
@@ -101,12 +100,12 @@ class Gobblet:
 
     def minmax(self, depth, alpha, beta):
         if self.is_mate():
-            return -1 if self.turn else 1, None
+            return -1 if self.turn == 0 else 1, None
 
         if depth == 0:
             return 0, None
 
-        best_score = -2 if self.turn else 2
+        best_score = -2 if self.turn == 0 else 2
         best_move = None
 
         for move in self.legal_moves():
@@ -114,7 +113,7 @@ class Gobblet:
             value, _ = self.minmax(depth - 1, alpha, beta)
             self.undo_move(move)
 
-            if self.turn:
+            if self.turn == 0:
                 if value > best_score:
                     best_score, best_move = value, move
 
@@ -132,15 +131,40 @@ class Gobblet:
 
         return best_score, best_move
 
-    def ai(self, depth=4):
+    def ai(self, depth=5):
         return self.minmax(depth, -1, 1)
 
     def display(self):
-        print(self.to_array())
-        print(self.stage)
+        cs = 'abcd'
+
+        print('   a  b  c  d')
+
+        for r, row in enumerate(self.board[::-1]):
+            print(4 - r, end=' ')
+            for stack in row:
+                if len(stack) == 0:
+                    print(' 0', end=' ')
+                elif stack[-1] > 0:
+                    print(f' {stack[-1]}', end=' ')
+                else:
+                    print(stack[-1], end=' ')
+
+            print(f' {4 - r}')
+
+        print('   a  b  c  d')
 
     def get_turn(self):
         return self.turn
+
+    def alg_to_coord(self, alg):
+        letter_to_coord_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'x': -1}
+
+        return (letter_to_coord_map[alg[0]], int(alg[1]) - 1, letter_to_coord_map[alg[2]], int(alg[3]) - 1)
+
+    def coord_to_alg(self, coords):
+        coord_to_letter_map = {0: 'a', 1: 'b', 2: 'c', 3: 'd', -1: 'x'}
+
+        return f'{coord_to_letter_map[coords[0]]}{coords[1]+1}{coord_to_letter_map[coords[2]]}{coords[3]+1}'
 
 
 if __name__ == '__main__':
@@ -159,17 +183,20 @@ if __name__ == '__main__':
             continue
 
         elif move == 'ai':
+            t1 = time.time()
             score, coords = game.ai()
-            print(f'AI: {coords} [{score}]')
+            t2 = time.time()
+            print(f'AI: {game.coord_to_alg(coords)} [{score}, {int(t2-t1)}]')
 
         else:
-            coords = tuple([int(x) for x in move.split(',')])
+            coords = game.alg_to_coord(move)
 
         if not game.move(coords):
             print('Illegal move')
             continue
 
         if game.is_mate():
-            side = game.get_turn() + 1 % 2
+            game.display()
+            side = (game.get_turn() + 1) % 2
             print(f'{side} wins!')
             break
