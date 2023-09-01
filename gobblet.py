@@ -153,18 +153,45 @@ class Gobblet:
 
         print('   a  b  c  d')
 
+        for side in self.stage:
+            print('(', end='')
+            for stack in side:
+                if len(stack) == 0:
+                    print(0, end=' ')
+                else:
+                    print(stack[-1], end=' ')
+
+            print('\b)')
+
     def get_turn(self):
         return self.turn
 
     def alg_to_coord(self, alg):
-        letter_to_coord_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'x': -1}
+        letter_to_coord_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
 
-        return (letter_to_coord_map[alg[0]], int(alg[1]) - 1, letter_to_coord_map[alg[2]], int(alg[3]) - 1)
+        if alg[0] == 'x':
+            r1 = -1
+            c1 = int(alg[1]) - 1
+        else:
+            r1 = int(alg[1]) - 1
+            c1 = letter_to_coord_map[alg[0]]
+
+        r2 = int(alg[3]) - 1
+        c2 = letter_to_coord_map[alg[2]]
+
+        return (r1, c1, r2, c2)
 
     def coord_to_alg(self, coords):
-        coord_to_letter_map = {0: 'a', 1: 'b', 2: 'c', 3: 'd', -1: 'x'}
+        coord_to_letter_map = 'abcd'
 
-        return f'{coord_to_letter_map[coords[0]]}{coords[1]+1}{coord_to_letter_map[coords[2]]}{coords[3]+1}'
+        if coords[0] == -1:
+            alg = f'x{coords[1]+1}'
+        else:
+            alg = f'{coord_to_letter_map[coords[1]]}{coords[0]+1}'
+
+        alg += f'{coord_to_letter_map[coords[3]]}{coords[2]+1}'
+
+        return alg
 
 
 if __name__ == '__main__':
@@ -173,7 +200,8 @@ if __name__ == '__main__':
 
     while True:
         game.display()
-        print(f'Turn: {game.get_turn()}')
+        turn_str = 'White' if game.get_turn() == 0 else 'Black'
+        print(f'Turn: {turn_str}')
         move = input('Move: ')
         if move == 'end':
             break
@@ -197,6 +225,6 @@ if __name__ == '__main__':
 
         if game.is_mate():
             game.display()
-            side = (game.get_turn() + 1) % 2
-            print(f'{side} wins!')
+            turn_str = 'White' if game.get_turn() == 1 else 'Black'
+            print(f'{turn_str} wins!')
             break
