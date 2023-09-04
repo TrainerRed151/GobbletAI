@@ -1,6 +1,7 @@
 # Copyright © 2023 Brian Pomerantz. All Rights Reserved.
 
 import time
+import sys
 
 class Gobblet:
     def __init__(self):
@@ -15,28 +16,28 @@ class Gobblet:
         val = -1 if self.turn == 0 else 1
 
         for i in range(4):
-            if (len(self.board[i][0]) != 0 and val*self.board[i][0][-1] > 0
-                    and len(self.board[i][1]) != 0 and val*self.board[i][1][-1] > 0
-                    and len(self.board[i][2]) != 0 and val*self.board[i][2][-1] > 0
-                    and len(self.board[i][3]) != 0 and val*self.board[i][3][-1] > 0):
+            if (self.board[i][0] and val*self.board[i][0][-1] > 0
+                    and self.board[i][1] and val*self.board[i][1][-1] > 0
+                    and self.board[i][2] and val*self.board[i][2][-1] > 0
+                    and self.board[i][3] and val*self.board[i][3][-1] > 0):
                 return True
 
-            if (len(self.board[0][i]) != 0 and val*self.board[0][i][-1] > 0
-                    and len(self.board[1][i]) != 0 and val*self.board[1][i][-1] > 0
-                    and len(self.board[2][i]) != 0 and val*self.board[2][i][-1] > 0
-                    and len(self.board[3][i]) != 0 and val*self.board[3][i][-1] > 0):
+            if (self.board[0][i] and val*self.board[0][i][-1] > 0
+                    and self.board[1][i] and val*self.board[1][i][-1] > 0
+                    and self.board[2][i] and val*self.board[2][i][-1] > 0
+                    and self.board[3][i] and val*self.board[3][i][-1] > 0):
                 return True
 
-        if (len(self.board[0][0]) != 0 and val*self.board[0][0][-1] > 0
-                and len(self.board[1][1]) != 0 and val*self.board[1][1][-1] > 0
-                and len(self.board[2][2]) != 0 and val*self.board[2][2][-1] > 0
-                and len(self.board[3][3]) != 0 and val*self.board[3][3][-1] > 0):
+        if (self.board[0][0] and val*self.board[0][0][-1] > 0
+                and self.board[1][1] and val*self.board[1][1][-1] > 0
+                and self.board[2][2] and val*self.board[2][2][-1] > 0
+                and self.board[3][3] and val*self.board[3][3][-1] > 0):
             return True
 
-        if (len(self.board[0][3]) != 0 and val*self.board[0][3][-1] > 0
-                and len(self.board[1][2]) != 0 and val*self.board[1][2][-1] > 0
-                and len(self.board[2][1]) != 0 and val*self.board[2][1][-1] > 0
-                and len(self.board[3][0]) != 0 and val*self.board[3][0][-1] > 0):
+        if (self.board[0][3] and val*self.board[0][3][-1] > 0
+                and self.board[1][2] and val*self.board[1][2][-1] > 0
+                and self.board[2][1] and val*self.board[2][1][-1] > 0
+                and self.board[3][0] and val*self.board[3][0][-1] > 0):
             return True
 
         return False
@@ -69,13 +70,13 @@ class Gobblet:
     def legal_moves(self):
         moves = []
         for i, stack in enumerate(self.stage[self.turn]):
-            if len(stack) == 0:
+            if not stack:
                 continue
 
             piece = stack[-1]
             for r in range(4):
                 for c in range(4):
-                    if len(self.board[r][c]) == 0:
+                    if not self.board[r][c]:
                         moves.append((-1, i, r, c))
 
                     elif abs(piece) > abs(self.board[r][c][-1]):
@@ -84,13 +85,13 @@ class Gobblet:
         ref = (1, 0, 0)
         for r in range(4):
             for c in range(4):
-                if len(self.board[r][c]) != 0:
+                if self.board[r][c]:
                     piece = self.board[r][c][-1]
                     color = ref[(abs(piece) // piece) + 1]
                     if color == self.turn:
                         for r2 in range(4):
                             for c2 in range(4):
-                                if len(self.board[r2][c2]) == 0:
+                                if not self.board[r2][c2]:
                                     moves.append((r, c, r2, c2))
 
                                 elif abs(piece) > abs(self.board[r2][c2][-1]):
@@ -142,7 +143,7 @@ class Gobblet:
         for r, row in enumerate(self.board[::-1]):
             print(4 - r, end=' ')
             for stack in row:
-                if len(stack) == 0:
+                if not stack:
                     print(' 0', end=' ')
                 elif stack[-1] > 0:
                     print(f' {stack[-1]}', end=' ')
@@ -156,7 +157,7 @@ class Gobblet:
         for side in self.stage:
             print('(', end='')
             for stack in side:
-                if len(stack) == 0:
+                if not stack:
                     print(0, end=' ')
                 else:
                     print(stack[-1], end=' ')
@@ -198,6 +199,8 @@ if __name__ == '__main__':
     game = Gobblet()
     coords = None
 
+    depth = int(sys.argv[1])
+
     while True:
         game.display()
         turn_str = 'White' if game.get_turn() == 0 else 'Black'
@@ -212,7 +215,7 @@ if __name__ == '__main__':
 
         elif move == 'ai':
             t1 = time.time()
-            score, coords = game.ai()
+            score, coords = game.ai(depth=depth)
             t2 = time.time()
             print(f'AI: {game.coord_to_alg(coords)} [{score}, {int(t2-t1)}]')
 
