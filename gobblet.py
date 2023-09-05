@@ -2,6 +2,7 @@
 
 import time
 import sys
+from colorama import Fore
 
 class Gobblet:
     def __init__(self):
@@ -138,31 +139,34 @@ class Gobblet:
     def display(self):
         cs = 'abcd'
 
-        print('   a  b  c  d')
+        print(Fore.WHITE + '  a b c d')
 
         for r, row in enumerate(self.board[::-1]):
-            print(4 - r, end=' ')
+            print(Fore.WHITE + str(4 - r), end=' ')
             for stack in row:
                 if not stack:
-                    print(' 0', end=' ')
+                    print(Fore.WHITE + '.', end=' ')
                 elif stack[-1] > 0:
-                    print(f' {stack[-1]}', end=' ')
+                    print(Fore.GREEN + str(stack[-1]), end=' ')
                 else:
-                    print(stack[-1], end=' ')
+                    print(Fore.RED + str(-stack[-1]), end=' ')
 
-            print(f' {4 - r}')
+            print(Fore.WHITE + f'{4 - r}')
 
-        print('   a  b  c  d')
+        print(Fore.WHITE + '  a b c d')
 
         for side in self.stage:
-            print('(', end='')
+            print(Fore.WHITE + '(', end='')
             for stack in side:
                 if not stack:
-                    print(0, end=' ')
+                    print(Fore.WHITE + '.', end=' ')
                 else:
-                    print(stack[-1], end=' ')
+                    if stack[-1] > 0:
+                        print(Fore.GREEN + str(stack[-1]), end=' ')
+                    else:
+                        print(Fore.RED + str(-stack[-1]), end=' ')
 
-            print('\b)')
+            print(Fore.WHITE + '\b)')
 
     def get_turn(self):
         return self.turn
@@ -207,6 +211,7 @@ if __name__ == '__main__':
         print(f'Turn: {turn_str}')
         move = input('Move: ')
         if move == 'end':
+            print(Fore.RESET)
             break
 
         elif move == 'undo':
