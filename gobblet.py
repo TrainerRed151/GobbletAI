@@ -1,7 +1,7 @@
 # Copyright © 2023 Brian Pomerantz. All Rights Reserved.
 
-import time
 import sys
+import time
 from colorama import Fore
 
 class Gobblet:
@@ -102,12 +102,12 @@ class Gobblet:
 
     def minmax(self, depth, alpha, beta):
         if self.is_mate():
-            return -1 if self.turn == 0 else 1, None
+            return -10 if self.turn == 0 else 10, None
 
         if depth == 0:
             return 0, None
 
-        best_score = -2 if self.turn == 0 else 2
+        best_score = -11 if self.turn == 0 else 11
         best_move = None
 
         for move in self.legal_moves():
@@ -133,8 +133,28 @@ class Gobblet:
 
         return best_score, best_move
 
-    def ai(self, depth=5):
-        return self.minmax(depth, -1, 1)
+    def ai(self, move_time=20):
+        t1 = time.time()
+        depth = 1
+        best_score, best_move = self.minmax(depth, -10, 10)
+
+        while True:
+            depth += 1
+            new_score, new_move = self.minmax(depth, -10, 10)
+
+            if self.turn == 0:
+                if new_score > best_score:
+                    best_score = new_score
+                    best_move = new_move
+            else:
+                if new_score < best_score:
+                    best_score = new_score
+                    best_move = new_move
+
+            t2 = time.time()
+
+            if t2 - t1 > move_time:
+                return depth, best_score, best_move
 
     def display(self):
         cs = 'abcd'
@@ -202,8 +222,7 @@ class Gobblet:
 if __name__ == '__main__':
     game = Gobblet()
     coords = None
-
-    depth = int(sys.argv[1])
+    move_time = int(sys.argv[1]) if len(sys.argv) == 2 else 20
 
     while True:
         game.display()
@@ -220,9 +239,9 @@ if __name__ == '__main__':
 
         elif move == 'ai':
             t1 = time.time()
-            score, coords = game.ai(depth=depth)
+            depth, score, coords = game.ai(move_time=move_time)
             t2 = time.time()
-            print(f'AI: {game.coord_to_alg(coords)} [{score}, {int(t2-t1)}]')
+            print(f'AI: {game.coord_to_alg(coords)} [{score}, {depth}, {int(t2-t1)}]')
 
         else:
             coords = game.alg_to_coord(move)
