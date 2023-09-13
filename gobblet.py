@@ -4,6 +4,10 @@ import sys
 import time
 from colorama import Fore
 
+TIME_LIMIT = 10
+MAX_SCORE = 20
+
+
 class Gobblet:
     def __init__(self):
         self.board = [[[], [], [], []], [[], [], [], []], [[], [], [], []], [[], [], [], []]]
@@ -12,6 +16,59 @@ class Gobblet:
             [[-1, -2, -3, -4], [-1, -2, -3, -4], [-1, -2, -3, -4]]
         ]
         self.turn = 0
+
+    def is_part_of_3_in_a_row(self, color, coord):
+        r = coord[0]
+        c = coord[1]
+        ref = (1, 0, 0)
+
+        count = 0
+        for i in range(4):
+            if self.board[r][i]:
+                piece = self.board[r][i][-1]
+                piece_color = ref[(abs(piece) // piece) + 1]
+                if color == piece_color:
+                    count += 1
+
+        if count >= 3:
+            return True
+
+        count = 0
+        for i in range(4):
+            if self.board[i][c]:
+                piece = self.board[i][c][-1]
+                piece_color = ref[(abs(piece) // piece) + 1]
+                if color == piece_color:
+                    count += 1
+
+        if count >= 3:
+            return True
+
+        if r == c:
+            count = 0
+            for i in range(4):
+                if self.board[i][i]:
+                    piece = self.board[i][i][-1]
+                    piece_color = ref[(abs(piece) // piece) + 1]
+                    if color == piece_color:
+                        count += 1
+
+            if count >= 3:
+                return True
+
+        if r == 3 - c:
+            count = 0
+            for i in range(4):
+                if self.board[i][3-i]:
+                    piece = self.board[i][3-i][-1]
+                    piece_color = ref[(abs(piece) // piece) + 1]
+                    if color == piece_color:
+                        count += 1
+
+            if count >= 3:
+                return True
+
+        return False
 
     def is_mate(self):
         val = -1 if self.turn == 0 else 1
@@ -69,6 +126,7 @@ class Gobblet:
             self.board[r2][c2].append(self.board[r1][c1].pop())
 
     def legal_moves(self):
+        opponent = (self.turn + 1) % 2
         moves = []
         for i, stack in enumerate(self.stage[self.turn]):
             if not stack:
@@ -80,7 +138,7 @@ class Gobblet:
                     if not self.board[r][c]:
                         moves.append((-1, i, r, c))
 
-                    elif abs(piece) > abs(self.board[r][c][-1]):
+                    elif abs(piece) > abs(self.board[r][c][-1]) and self.is_part_of_3_in_a_row(opponent, (r, c)):
                         moves.append((-1, i, r, c))
 
         ref = (1, 0, 0)
@@ -100,19 +158,31 @@ class Gobblet:
 
         return moves
 
-    def minmax(self, depth, alpha, beta):
+    def get_board_score(self):
+        count_3 = 0
+        for r in range(4):
+            for c in range(4):
+                if self.is_part_of_3_in_a_row(0, (r, c)):
+                    count_3 -= 1
+
+                if self.is_part_of_3_in_a_row(1, (r, c)):
+                    count_3 += 1
+
+        return count_3
+
+    def minmax(self, depth, alpha, beta, time_limit):
         if self.is_mate():
-            return -10 if self.turn == 0 else 10, None
+            return -MAX_SCORE if self.turn == 0 else MAX_SCORE, None
 
-        if depth == 0:
-            return 0, None
+        if depth == 0 or time.time() > time_limit:
+            return self.get_board_score(), None
 
-        best_score = -11 if self.turn == 0 else 11
+        best_score = -MAX_SCORE - 1 if self.turn == 0 else MAX_SCORE + 1
         best_move = None
 
         for move in self.legal_moves():
             self.move(move)
-            value, _ = self.minmax(depth - 1, alpha, beta)
+            value, _ = self.minmax(depth - 1, alpha, beta, time_limit)
             self.undo_move(move)
 
             if self.turn == 0:
@@ -133,14 +203,20 @@ class Gobblet:
 
         return best_score, best_move
 
-    def ai(self, move_time=20):
-        t1 = time.time()
+    def ai(self, move_time=TIME_LIMIT):
+        time_limit = time.time() + move_time
         depth = 1
-        best_score, best_move = self.minmax(depth, -10, 10)
+        best_score, best_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
 
         while True:
+            if self.turn == 0 and best_score == MAX_SCORE:
+                return depth, best_score, best_move
+
+            if self.turn == 1 and best_score == -MAX_SCORE:
+                return depth, best_score, best_move
+
             depth += 1
-            new_score, new_move = self.minmax(depth, -10, 10)
+            new_score, new_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
 
             if self.turn == 0:
                 if new_score > best_score:
@@ -151,9 +227,7 @@ class Gobblet:
                     best_score = new_score
                     best_move = new_move
 
-            t2 = time.time()
-
-            if t2 - t1 > move_time:
+            if time.time() > time_limit:
                 return depth, best_score, best_move
 
     def display(self):
@@ -222,7 +296,7 @@ class Gobblet:
 if __name__ == '__main__':
     game = Gobblet()
     coords = None
-    move_time = int(sys.argv[1]) if len(sys.argv) == 2 else 20
+    move_time = int(sys.argv[1]) if len(sys.argv) == 2 else TIME_LIMIT
 
     while True:
         game.display()
