@@ -158,7 +158,6 @@ class Gobblet:
         return moves
 
     def get_board_score(self):
-        return 0
         count_3 = 0
         for r in range(4):
             for c in range(4):
@@ -196,7 +195,7 @@ class Gobblet:
                 if value > best_score:
                     best_score, best_move = value, move
 
-                if value > beta:
+                if value >= beta:
                     break
                 alpha = max(value, alpha)
 
@@ -204,7 +203,7 @@ class Gobblet:
                 if value < best_score:
                     best_score, best_move = value, move
 
-                if value < alpha:
+                if value <= alpha:
                     break
                 beta = min(value, beta)
 
@@ -213,7 +212,7 @@ class Gobblet:
     def ai(self, move_time=TIME_LIMIT):
         time_limit = time.time() + move_time
         depth = 1
-        best_score, best_move = self.minmax(depth, -MAX_SCORE-1, MAX_SCORE+1, time_limit)
+        best_score, best_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
 
         while True:
             if self.white and best_score == MAX_SCORE:
@@ -223,7 +222,7 @@ class Gobblet:
                 return depth, best_score, best_move
 
             depth += 1
-            new_score, new_move = self.minmax(depth, -MAX_SCORE-1, MAX_SCORE+1, time_limit)
+            new_score, new_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
 
             if new_score is None:
                 break
@@ -306,7 +305,6 @@ if __name__ == '__main__':
         turn_str = 'White' if game.get_turn() else 'Black'
         print(f'Turn: {turn_str}')
         move = input('Move: ')
-        #move = 'ai'
         if move == 'end':
             print(Fore.RESET)
             break
