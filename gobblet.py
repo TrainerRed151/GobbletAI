@@ -15,18 +15,17 @@ class Gobblet:
             [[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]],
             [[-1, -2, -3, -4], [-1, -2, -3, -4], [-1, -2, -3, -4]]
         ]
-        self.turn = 0
+        self.white = True
 
     def is_part_of_3_in_a_row(self, color, coord):
         r = coord[0]
         c = coord[1]
-        ref = (1, 0, 0)
 
         count = 0
         for i in range(4):
             if self.board[r][i]:
                 piece = self.board[r][i][-1]
-                piece_color = ref[(abs(piece) // piece) + 1]
+                piece_color = piece > 0
                 if color == piece_color:
                     count += 1
 
@@ -37,7 +36,7 @@ class Gobblet:
         for i in range(4):
             if self.board[i][c]:
                 piece = self.board[i][c][-1]
-                piece_color = ref[(abs(piece) // piece) + 1]
+                piece_color = piece > 0
                 if color == piece_color:
                     count += 1
 
@@ -49,7 +48,7 @@ class Gobblet:
             for i in range(4):
                 if self.board[i][i]:
                     piece = self.board[i][i][-1]
-                    piece_color = ref[(abs(piece) // piece) + 1]
+                    piece_color = piece > 0
                     if color == piece_color:
                         count += 1
 
@@ -61,7 +60,7 @@ class Gobblet:
             for i in range(4):
                 if self.board[i][3-i]:
                     piece = self.board[i][3-i][-1]
-                    piece_color = ref[(abs(piece) // piece) + 1]
+                    piece_color = piece > 0
                     if color == piece_color:
                         count += 1
 
@@ -71,7 +70,8 @@ class Gobblet:
         return False
 
     def is_mate(self):
-        val = -1 if self.turn == 0 else 1
+        # flipped because turn changed after move
+        val = 1 if not self.white else -1
 
         for i in range(4):
             if (self.board[i][0] and val*self.board[i][0][-1] > 0
@@ -107,28 +107,28 @@ class Gobblet:
         r1, c1, r2, c2 = coords
 
         if r1 == -1:
-           self.board[r2][c2].append(self.stage[self.turn][c1].pop())
+           self.board[r2][c2].append(self.stage[int(not self.white)][c1].pop())
 
         else:
             self.board[r2][c2].append(self.board[r1][c1].pop())
 
-        self.turn = (self.turn + 1) % 2
+        self.white = not self.white
         return True
 
     def undo_move(self, coords):
-        self.turn = (self.turn + 1) % 2
+        self.white = not self.white
         r2, c2, r1, c1 = coords
 
         if r2 == -1:
-           self.stage[self.turn][c2].append(self.board[r1][c1].pop())
+           self.stage[int(not self.white)][c2].append(self.board[r1][c1].pop())
 
         else:
             self.board[r2][c2].append(self.board[r1][c1].pop())
 
     def legal_moves(self):
-        opponent = (self.turn + 1) % 2
+        opponent = not self.white
         moves = []
-        for i, stack in enumerate(self.stage[self.turn]):
+        for i, stack in enumerate(self.stage[int(not self.white)]):
             if not stack:
                 continue
 
@@ -141,13 +141,12 @@ class Gobblet:
                     elif abs(piece) > abs(self.board[r][c][-1]) and self.is_part_of_3_in_a_row(opponent, (r, c)):
                         moves.append((-1, i, r, c))
 
-        ref = (1, 0, 0)
         for r in range(4):
             for c in range(4):
                 if self.board[r][c]:
                     piece = self.board[r][c][-1]
-                    color = ref[(abs(piece) // piece) + 1]
-                    if color == self.turn:
+                    color = piece > 0
+                    if color == self.white:
                         for r2 in range(4):
                             for c2 in range(4):
                                 if not self.board[r2][c2]:
@@ -159,37 +158,45 @@ class Gobblet:
         return moves
 
     def get_board_score(self):
+        return 0
         count_3 = 0
         for r in range(4):
             for c in range(4):
-                if self.is_part_of_3_in_a_row(0, (r, c)):
-                    count_3 -= 1
+                if self.board[r][c]:
+                    if self.is_part_of_3_in_a_row(True, (r, c)):
+                        count_3 += 1
 
-                if self.is_part_of_3_in_a_row(1, (r, c)):
-                    count_3 += 1
+                    if self.is_part_of_3_in_a_row(False, (r, c)):
+                        count_3 -= 1
 
         return count_3
 
     def minmax(self, depth, alpha, beta, time_limit):
-        if self.is_mate():
-            return -MAX_SCORE if self.turn == 0 else MAX_SCORE, None
+        if time.time() > time_limit:
+            return None, None
 
-        if depth == 0 or time.time() > time_limit:
+        if self.is_mate():
+            # flipped because turn changed after move
+            return MAX_SCORE if not self.white else -MAX_SCORE, None
+
+        if depth == 0:
             return self.get_board_score(), None
 
-        best_score = -MAX_SCORE - 1 if self.turn == 0 else MAX_SCORE + 1
+        best_score = -MAX_SCORE - 1 if self.white else MAX_SCORE + 1
         best_move = None
 
         for move in self.legal_moves():
             self.move(move)
             value, _ = self.minmax(depth - 1, alpha, beta, time_limit)
             self.undo_move(move)
+            if value is None:
+                return None, None
 
-            if self.turn == 0:
+            if self.white:
                 if value > best_score:
                     best_score, best_move = value, move
 
-                if value >= beta:
+                if value > beta:
                     break
                 alpha = max(value, alpha)
 
@@ -197,7 +204,7 @@ class Gobblet:
                 if value < best_score:
                     best_score, best_move = value, move
 
-                if value <= alpha:
+                if value < alpha:
                     break
                 beta = min(value, beta)
 
@@ -206,29 +213,25 @@ class Gobblet:
     def ai(self, move_time=TIME_LIMIT):
         time_limit = time.time() + move_time
         depth = 1
-        best_score, best_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
+        best_score, best_move = self.minmax(depth, -MAX_SCORE-1, MAX_SCORE+1, time_limit)
 
         while True:
-            if self.turn == 0 and best_score == MAX_SCORE:
+            if self.white and best_score == MAX_SCORE:
                 return depth, best_score, best_move
 
-            if self.turn == 1 and best_score == -MAX_SCORE:
+            if not self.white and best_score == -MAX_SCORE:
                 return depth, best_score, best_move
 
             depth += 1
-            new_score, new_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
+            new_score, new_move = self.minmax(depth, -MAX_SCORE-1, MAX_SCORE+1, time_limit)
 
-            if self.turn == 0:
-                if new_score > best_score:
-                    best_score = new_score
-                    best_move = new_move
-            else:
-                if new_score < best_score:
-                    best_score = new_score
-                    best_move = new_move
+            if new_score is None:
+                break
 
-            if time.time() > time_limit:
-                return depth, best_score, best_move
+            best_score = new_score
+            best_move = new_move
+
+        return depth, best_score, best_move
 
     def display(self):
         cs = 'abcd'
@@ -263,7 +266,7 @@ class Gobblet:
             print(Fore.WHITE + '\b)')
 
     def get_turn(self):
-        return self.turn
+        return self.white
 
     def alg_to_coord(self, alg):
         letter_to_coord_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
@@ -300,9 +303,10 @@ if __name__ == '__main__':
 
     while True:
         game.display()
-        turn_str = 'White' if game.get_turn() == 0 else 'Black'
+        turn_str = 'White' if game.get_turn() else 'Black'
         print(f'Turn: {turn_str}')
         move = input('Move: ')
+        #move = 'ai'
         if move == 'end':
             print(Fore.RESET)
             break
@@ -326,6 +330,6 @@ if __name__ == '__main__':
 
         if game.is_mate():
             game.display()
-            turn_str = 'White' if game.get_turn() == 1 else 'Black'
+            turn_str = 'Black' if game.get_turn() else 'White'
             print(f'{turn_str} wins!')
             break
