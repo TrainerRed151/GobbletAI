@@ -16,6 +16,7 @@ class Gobblet:
             [[-1, -2, -3, -4], [-1, -2, -3, -4], [-1, -2, -3, -4]]
         ]
         self.white = True
+        self.ply = 0
 
     def is_part_of_3_in_a_row(self, color, coord):
         r = coord[0]
@@ -113,10 +114,12 @@ class Gobblet:
             self.board[r2][c2].append(self.board[r1][c1].pop())
 
         self.white = not self.white
+        self.ply += 1
         return True
 
     def undo_move(self, coords):
         self.white = not self.white
+        self.ply -= 1
         r2, c2, r1, c1 = coords
 
         if r2 == -1:
@@ -168,51 +171,44 @@ class Gobblet:
                     if self.is_part_of_3_in_a_row(False, (r, c)):
                         count_3 -= 1
 
-        return count_3
+        return count_3 if self.white else -count_3
 
-    def minmax(self, depth, alpha, beta, time_limit):
+    def negamax(self, depth, alpha, beta, time_limit):
         if time.time() > time_limit:
             return None, None
 
         if self.is_mate():
-            # flipped because turn changed after move
-            return MAX_SCORE if not self.white else -MAX_SCORE, None
+            return -MAX_SCORE, None
 
         if depth == 0:
             return self.get_board_score(), None
 
-        best_score = -MAX_SCORE - 1 if self.white else MAX_SCORE + 1
+        best_score = -MAX_SCORE - 1
         best_move = None
 
         for move in self.legal_moves():
             self.move(move)
-            value, _ = self.minmax(depth - 1, alpha, beta, time_limit)
+            value, _ = self.negamax(depth - 1, -beta, -alpha, time_limit)
             self.undo_move(move)
             if value is None:
                 return None, None
 
-            if self.white:
-                if value > best_score:
-                    best_score, best_move = value, move
+            value = -value
+            if value > best_score:
+                best_score, best_move = value, move
 
-                if value >= beta:
-                    break
-                alpha = max(value, alpha)
-
-            else:
-                if value < best_score:
-                    best_score, best_move = value, move
-
-                if value <= alpha:
-                    break
-                beta = min(value, beta)
+            alpha = max(value, alpha)
+            if alpha >= beta:
+                break
 
         return best_score, best_move
 
     def ai(self, move_time=TIME_LIMIT):
         time_limit = time.time() + move_time
         depth = 1
-        best_score, best_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
+        color = [-1, 1][self.white]
+        best_score, best_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
+        best_score *= color
 
         while True:
             if self.white and best_score == MAX_SCORE:
@@ -222,12 +218,12 @@ class Gobblet:
                 return depth, best_score, best_move
 
             depth += 1
-            new_score, new_move = self.minmax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
+            new_score, new_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
 
             if new_score is None:
                 break
 
-            best_score = new_score
+            best_score = color*new_score
             best_move = new_move
 
         return depth, best_score, best_move
