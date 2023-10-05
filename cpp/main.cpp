@@ -7,36 +7,41 @@ using namespace std;
 
 int main(int argc, const char *argv[]) {
     Gobblet game = Gobblet();
-    string move, move_in, turn_str;
+    string alg, move_in, turn_str;
 
     while (true) {
         game.display();
         turn_str = (game.get_turn()) ? "White" : "Black";
         cout << "Turn: " << turn_str << endl;
         cout << "Move: ";
-        cin >> move_in;
+        //cin >> move_in;
+        move_in = "ai";
 
         if (move_in == "end") {
             break;
         }
 
         else if (move_in == "undo") {
-            game.undo_move(move);
+            game.undo_move(alg);
             continue;
         }
 
         else if (move_in == "ai") {
-            
+            AIMove ai_move = game.ai(6);
+            alg = game.coord_to_alg(ai_move.move);
+            cout << "AI: " << alg << " [" << ai_move.score << "]" << endl;
         }
 
         else {
-            move = move_in;
+            alg = move_in;
         }
 
-        if (!game.move(move)) {
+        if (!game.move(alg)) {
             cout << "Illegal move" << endl;
             continue;
         }
+
+        break;
 
         if (game.is_mate()) {
             game.display();

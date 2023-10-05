@@ -6,8 +6,6 @@
 #include <map>
 #include "gobblet.hpp"
 
-//using namespace std;
-
 bool Coord::operator==(const Coord& rhs) const {
     return this->r == rhs.r && this->c == rhs.c;
 }
@@ -19,7 +17,6 @@ bool Move::operator==(const Move& rhs) const {
 Gobblet::Gobblet() {
     white = true;
     ply = 0;
-    max_score = 20;
     board = {{{}, {}, {}, {}}, {{}, {}, {}, {}}, {{}, {}, {}, {}}, {{}, {}, {}, {}}};
     stage = {
         {{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}},
@@ -145,8 +142,8 @@ bool Gobblet::is_mate() {
 
 bool Gobblet::move(Move coords) {
     bool legal = false;
-    for (Move move : legal_moves()) {
-        if (coords == move) {
+    for (Move m : legal_moves()) {
+        if (coords == m) {
             legal = true;
             break;
         }
@@ -271,76 +268,87 @@ std::vector<Move> Gobblet::legal_moves() {
     return moves;
 }
 
-/*
-    def get_board_score(self):
-        count_3 = 0
-        for r in range(4):
-            for c in range(4):
-                if self.board[r][c]:
-                    if self.is_part_of_3_in_a_row(True, (r, c)):
-                        count_3 += 1
+int Gobblet::board_evaluation() {
+    int count_3 = 0;
+    for (int r = 0; r < 4; r++) {
+        for (int c = 0; c < 4; c++) {
+            if (!board[r][c].empty()) {
+                Coord coord; coord.r = r; coord.c = c;
+                if (is_part_of_3_in_a_row(true, coord)) {
+                    count_3 += 1;
+                }
 
-                    if self.is_part_of_3_in_a_row(False, (r, c)):
-                        count_3 -= 1
+                if (is_part_of_3_in_a_row(false, coord)) {
+                    count_3 -= 1;
+                }
+            }
+        }
+    }
 
-        return count_3 if self.white else -count_3
+    return (white) ? count_3 : -count_3;
+}
 
-    def negamax(self, depth, alpha, beta, time_limit):
-        if time.time() > time_limit:
-            return None, None
+AIMove Gobblet::negamax(int depth, int alpha, int beta) {
+    AIMove ai_move;
 
-        if self.is_mate():
-            return -MAX_SCORE, None
+    if (is_mate()) {
+        ai_move.score = -MAX_SCORE;
+        return ai_move;
+    }
 
-        if depth == 0:
-            return self.get_board_score(), None
+    if (depth == 0) {
+        ai_move.score = board_evaluation();
+        return ai_move;
+    }
 
-        best_score = -MAX_SCORE - 1
-        best_move = None
+    AIMove best_ai_move;
+    best_ai_move.score = -MAX_SCORE - 1;
 
-        for move in self.legal_moves():
-            self.move(move)
-            value, _ = self.negamax(depth - 1, -beta, -alpha, time_limit)
-            self.undo_move(move)
-            if value is None:
-                return None, None
+    for (Move m : legal_moves()) {
+        move(m);
+        ai_move = negamax(depth - 1, -beta, -alpha);
+        undo_move(m);
 
-            value = -value
-            if value > best_score:
-                best_score, best_move = value, move
+        ai_move.score = -ai_move.score;
+        if (ai_move.score > best_ai_move.score) {
+            best_ai_move.score = ai_move.score;
+            best_ai_move.move = m;
+        }
 
-            alpha = max(value, alpha)
-            if alpha >= beta:
-                break
+        alpha = std::max(ai_move.score, alpha);
+        if (alpha >= beta) {
+            break;
+        }
+    }
 
-        return best_score, best_move
+    return best_ai_move;
+}
 
-    def ai(self, move_time=TIME_LIMIT):
-        time_limit = time.time() + move_time
-        depth = 1
-        color = [-1, 1][self.white]
-        best_score, best_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
-        best_score *= color
+AIMove Gobblet::ai(int max_depth) {
+    int depth = 1;
+    int color = (white) ? 1 : -1;
+    AIMove best_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE);
+    best_ai_move.score *= color;
 
-        while True:
-            if self.white and best_score == MAX_SCORE:
-                return depth, best_score, best_move
+    while (depth <= max_depth) {
+        std::cout << depth << std::endl;
+        if (white && best_ai_move.score == MAX_SCORE) {
+            break;
+        }
 
-            if not self.white and best_score == -MAX_SCORE:
-                return depth, best_score, best_move
+        if (!white && best_ai_move.score == -MAX_SCORE) {
+            break;
+        }
 
-            depth += 1
-            new_score, new_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
+        depth++;
+        AIMove new_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE);
 
-            if new_score is None:
-                break
+        best_ai_move = new_ai_move;
+        best_ai_move.score *= color;
+    }
 
-            best_score = color*new_score
-            best_move = new_move
-
-        return depth, best_score, best_move
-
-*/
+    return best_ai_move;
+}
 
 void Gobblet::display() {
     std::cout << "  a b c d" << std::endl;
@@ -437,57 +445,20 @@ Move Gobblet::alg_to_coord(std::string alg) {
     return m;
 }
 
-/*
-std::string Gobblet::coord_to_alg(Move coords):
-        coord_to_letter_map = 'abcd'
+std::string Gobblet::coord_to_alg(Move coords) {
+    std::string coord_to_letter_map = "abcd";
+    std::string alg = "";
 
-        if coords[0] == -1:
-            alg = f'x{coords[1]+1}'
-        else:
-            alg = f'{coord_to_letter_map[coords[1]]}{coords[0]+1}'
+    if (coords.from.r == -1) {
+        alg += "x" + std::to_string(coords.from.c + 1);
+    }
+    else {
+        alg += coord_to_letter_map[coords.from.c] + std::to_string(coords.from.r + 1);
+    }
 
-        alg += f'{coord_to_letter_map[coords[3]]}{coords[2]+1}'
+    alg += coord_to_letter_map[coords.to.c] + std::to_string(coords.to.r + 1);
 
-        return alg
-
-
-if __name__ == '__main__':
-    game = Gobblet()
-    coords = None
-    move_time = int(sys.argv[1]) if len(sys.argv) == 2 else TIME_LIMIT
-
-    while True:
-        game.display()
-        turn_str = 'White' if game.get_turn() else 'Black'
-        print(f'Turn: {turn_str}')
-        move = input('Move: ')
-        if move == 'end':
-            print(Fore.RESET)
-            break
-
-        elif move == 'undo':
-            game.undo_move(coords)
-            continue
-
-        elif move == 'ai':
-            t1 = time.time()
-            depth, score, coords = game.ai(move_time=move_time)
-            t2 = time.time()
-            print(f'AI: {game.coord_to_alg(coords)} [{score}, {depth}, {int(t2-t1)}]')
-
-        else:
-            coords = game.alg_to_coord(move)
-
-        if not game.move(coords):
-            print('Illegal move')
-            continue
-
-        if game.is_mate():
-            game.display()
-            turn_str = 'Black' if game.get_turn() else 'White'
-            print(f'{turn_str} wins!')
-            break
-
-*/
+    return alg;
+}
 
 Gobblet::~Gobblet() {}

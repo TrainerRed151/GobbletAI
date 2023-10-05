@@ -1,7 +1,7 @@
 # Copyright © 2023 Brian Pomerantz. All Rights Reserved.
 
 CC = g++
-CFLAGS = -Wall -std=c++2a
+CFLAGS = -Wall -std=c++2a -O3
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = run

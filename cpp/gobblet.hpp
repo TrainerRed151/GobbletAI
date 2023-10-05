@@ -3,6 +3,8 @@
 #ifndef GOBBLET_HPP
 #define GOBBLET_HPP
 
+#define MAX_SCORE 20
+
 #include <vector>
 #include <string>
 
@@ -28,7 +30,7 @@ struct AIMove {
 class Gobblet {
 private:
     bool white;
-    int ply, max_score;
+    int ply;
     std::vector<std::vector<std::vector<int>>> board, stage;
 
 public:
@@ -47,7 +49,7 @@ public:
 
     int board_evaluation();
     AIMove negamax(int depth, int alpha, int beta);
-    AIMove ai();
+    AIMove ai(int max_depth);
 
     Move alg_to_coord(std::string alg);
     std::string coord_to_alg(Move coords);
