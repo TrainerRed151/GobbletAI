@@ -1,6 +1,8 @@
 // Copyright © 2023 Brian Pomerantz. All Rights Reserved.
 
 #include <iostream>
+#include <ctime>
+//#include <string>
 #include "gobblet.hpp"
 
 using namespace std;
@@ -9,13 +11,17 @@ int main(int argc, const char *argv[]) {
     Gobblet game = Gobblet();
     string alg, move_in, turn_str;
 
+    int move_time = 10;
+    if (argc == 2) {
+        move_time = atoi(argv[1]);
+    }
+        
     while (true) {
         game.display();
         turn_str = (game.get_turn()) ? "White" : "Black";
         cout << "Turn: " << turn_str << endl;
         cout << "Move: ";
-        //cin >> move_in;
-        move_in = "ai";
+        cin >> move_in;
 
         if (move_in == "end") {
             break;
@@ -27,9 +33,11 @@ int main(int argc, const char *argv[]) {
         }
 
         else if (move_in == "ai") {
-            AIMove ai_move = game.ai(6);
+            int t1 = time(nullptr);
+            AIMove ai_move = game.ai(move_time);
+            int t2 = time(nullptr);
             alg = game.coord_to_alg(ai_move.move);
-            cout << "AI: " << alg << " [" << ai_move.score << "]" << endl;
+            cout << "AI: " << alg << " [" << ai_move.score << ", " << ai_move.depth << ", " << to_string(t2-t1) << "]" << endl;
         }
 
         else {
@@ -40,8 +48,6 @@ int main(int argc, const char *argv[]) {
             cout << "Illegal move" << endl;
             continue;
         }
-
-        break;
 
         if (game.is_mate()) {
             game.display();

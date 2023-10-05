@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <ctime>
 #include "gobblet.hpp"
 
 bool Coord::operator==(const Coord& rhs) const {
@@ -288,8 +289,14 @@ int Gobblet::board_evaluation() {
     return (white) ? count_3 : -count_3;
 }
 
-AIMove Gobblet::negamax(int depth, int alpha, int beta) {
+AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     AIMove ai_move;
+    ai_move.depth = 0;
+
+    if (std::time(nullptr) > time_limit) {
+        ai_move.depth = -1;
+        return ai_move;
+    }
 
     if (is_mate()) {
         ai_move.score = -MAX_SCORE;
@@ -306,8 +313,12 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta) {
 
     for (Move m : legal_moves()) {
         move(m);
-        ai_move = negamax(depth - 1, -beta, -alpha);
+        ai_move = negamax(depth - 1, -beta, -alpha, time_limit);
         undo_move(m);
+
+        if (ai_move.depth == -1) {
+            return ai_move;
+        }
 
         ai_move.score = -ai_move.score;
         if (ai_move.score > best_ai_move.score) {
@@ -324,14 +335,15 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta) {
     return best_ai_move;
 }
 
-AIMove Gobblet::ai(int max_depth) {
+AIMove Gobblet::ai(int move_time) {
+    int time_limit = std::time(nullptr) + move_time;
     int depth = 1;
     int color = (white) ? 1 : -1;
-    AIMove best_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE);
+    AIMove best_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit);
     best_ai_move.score *= color;
+    best_ai_move.depth = 1;
 
-    while (depth <= max_depth) {
-        std::cout << depth << std::endl;
+    while (true) {
         if (white && best_ai_move.score == MAX_SCORE) {
             break;
         }
@@ -341,10 +353,15 @@ AIMove Gobblet::ai(int max_depth) {
         }
 
         depth++;
-        AIMove new_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE);
+        AIMove new_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit);
+
+        if (new_ai_move.depth == -1) {
+            break;
+        }
 
         best_ai_move = new_ai_move;
         best_ai_move.score *= color;
+        best_ai_move.depth = depth;
     }
 
     return best_ai_move;

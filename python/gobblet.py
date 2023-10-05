@@ -221,6 +221,7 @@ class Gobblet:
             new_score, new_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
 
             if new_score is None:
+                depth -= 1
                 break
 
             best_score = color*new_score

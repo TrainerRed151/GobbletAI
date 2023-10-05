@@ -25,6 +25,7 @@ struct Move {
 struct AIMove {
     Move move;
     int score;
+    int depth;
 };
 
 class Gobblet {
@@ -48,8 +49,8 @@ public:
     std::vector<Move> legal_moves();
 
     int board_evaluation();
-    AIMove negamax(int depth, int alpha, int beta);
-    AIMove ai(int max_depth);
+    AIMove negamax(int depth, int alpha, int beta, int time_limit);
+    AIMove ai(int move_time);
 
     Move alg_to_coord(std::string alg);
     std::string coord_to_alg(Move coords);
