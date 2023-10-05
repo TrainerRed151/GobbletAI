@@ -105,7 +105,7 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
 
 
 bool Gobblet::is_mate() {
-        // flipped because turn changed after move
+    // flipped because turn changed after move
     int val = (white) ? -1 : 1;
 
     for (int i = 0; i < 4; i++) {
@@ -293,7 +293,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     AIMove ai_move;
     ai_move.depth = 0;
 
-    if (std::time(nullptr) > time_limit) {
+    if (std::clock() > time_limit) {
         ai_move.depth = -1;
         return ai_move;
     }
@@ -336,7 +336,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
 }
 
 AIMove Gobblet::ai(int move_time) {
-    int time_limit = std::time(nullptr) + move_time;
+    int time_limit = std::clock() + move_time*CLOCKS_PER_SEC;
     int depth = 1;
     int color = (white) ? 1 : -1;
     AIMove best_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit);

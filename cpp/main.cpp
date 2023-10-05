@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <ctime>
-//#include <string>
 #include "gobblet.hpp"
 
 using namespace std;
@@ -33,11 +32,12 @@ int main(int argc, const char *argv[]) {
         }
 
         else if (move_in == "ai") {
-            int t1 = time(nullptr);
+            int t1 = clock();
             AIMove ai_move = game.ai(move_time);
-            int t2 = time(nullptr);
+            int t2 = clock();
+            int secs = (t2 - t1)/CLOCKS_PER_SEC;
             alg = game.coord_to_alg(ai_move.move);
-            cout << "AI: " << alg << " [" << ai_move.score << ", " << ai_move.depth << ", " << to_string(t2-t1) << "]" << endl;
+            cout << "AI: " << alg << " [" << ai_move.score << ", " << ai_move.depth << ", " << to_string(secs) << "]" << endl;
         }
 
         else {
