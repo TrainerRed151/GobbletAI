@@ -37,7 +37,7 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
 
     int count = 0;
     int piece = 0;
-    bool piece_color = false;
+    bool piece_color;
 
     for (int i = 0; i < 4; i++) {
         if (!board[r][i].empty()) {
@@ -144,10 +144,17 @@ bool Gobblet::is_mate() {
 }
 
 bool Gobblet::move(Move coords) {
-    //legal = false;
-    //for (Move move : legal_moves()) {
-    //    if 
-    //    return False
+    bool legal = false;
+    for (Move move : legal_moves()) {
+        if (coords == move) {
+            legal = true;
+            break;
+        }
+    }
+
+    if (!legal) {
+        return false;
+    }
 
     int r1 = coords.from.r;
     int c1 = coords.from.c;
@@ -176,51 +183,95 @@ bool Gobblet::move(std::string alg) {
     return move(m);
 }
 
+void Gobblet::undo_move(Move coords) {
+    white = !white;
+    ply -= 1;
+    int r2 = coords.from.r;
+    int c2 = coords.from.c;
+    int r1 = coords.to.r;
+    int c1 = coords.to.c;
+
+    if (r2 == -1) {
+        int piece = board[r1][c1].back();
+        stage[!white][c2].push_back(piece);
+        board[r1][c1].pop_back();
+    }
+
+    else {
+        int piece = board[r1][c1].back();
+        board[r2][c2].push_back(piece);
+        board[r1][c1].pop_back();
+    }
+}
+
+void Gobblet::undo_move(std::string alg) {
+    Move m = alg_to_coord(alg);
+    undo_move(m);
+}
+
+std::vector<Move> Gobblet::legal_moves() {
+    bool opponent = !white;
+    int piece;
+    bool color;
+    std::vector<Move> moves = {};
+
+    for (int i = 0; i < 2; i++) {
+        if (stage[!white][i].empty()) {
+            continue;
+        }
+
+        piece = stage[!white][i].back();
+        for (int r = 0; r < 4; r++) {
+            for (int c = 0; c < 4; c++) {
+                Coord t; t.r = r; t.c = c;
+
+                if (board[r][c].empty()) {
+                    Coord f; f.r = -1; f.c = i;
+                    Move m; m.from = f; m.to = t;
+                    moves.push_back(m);
+                }
+
+                else if (std::abs(piece) > std::abs(board[r][c].back()) && is_part_of_3_in_a_row(opponent, t)) {
+                    Coord f; f.r = -1; f.c = i;
+                    Move m; m.from = f; m.to = t;
+                    moves.push_back(m);
+                }
+            }
+        }
+    }
+
+    for (int r = 0; r < 4; r++) {
+        for (int c = 0; c < 4; c++) {
+            if (!board[r][c].empty()) {
+                piece = board[r][c].back();
+                color = piece > 0;
+                if (color == white) {
+                    for (int r2 = 0; r2 < 4; r2++) {
+                        for (int c2 = 0; c2 < 4; c2++) {
+                            if (board[r2][c2].empty()) {
+                                Coord f; f.r = r; f.c = c;
+                                Coord t; t.r = r2; t.c = c2;
+                                Move m; m.from = f; m.to = t;
+                                moves.push_back(m);
+                            }
+
+                            else if (std::abs(piece) > std::abs(board[r2][c2].back())) {
+                                Coord f; f.r = r; f.c = c;
+                                Coord t; t.r = r2; t.c = c2;
+                                Move m; m.from = f; m.to = t;
+                                moves.push_back(m);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return moves;
+}
+
 /*
-
-    def undo_move(self, coords):
-        self.white = not self.white
-        self.ply -= 1
-        r2, c2, r1, c1 = coords
-
-        if r2 == -1:
-           self.stage[int(not self.white)][c2].append(self.board[r1][c1].pop())
-
-        else:
-            self.board[r2][c2].append(self.board[r1][c1].pop())
-
-    def legal_moves(self):
-        opponent = not self.white
-        moves = []
-        for i, stack in enumerate(self.stage[int(not self.white)]):
-            if not stack:
-                continue
-
-            piece = stack[-1]
-            for r in range(4):
-                for c in range(4):
-                    if not self.board[r][c]:
-                        moves.append((-1, i, r, c))
-
-                    elif abs(piece) > abs(self.board[r][c][-1]) and self.is_part_of_3_in_a_row(opponent, (r, c)):
-                        moves.append((-1, i, r, c))
-
-        for r in range(4):
-            for c in range(4):
-                if self.board[r][c]:
-                    piece = self.board[r][c][-1]
-                    color = piece > 0
-                    if color == self.white:
-                        for r2 in range(4):
-                            for c2 in range(4):
-                                if not self.board[r2][c2]:
-                                    moves.append((r, c, r2, c2))
-
-                                elif abs(piece) > abs(self.board[r2][c2][-1]):
-                                    moves.append((r, c, r2, c2))
-
-        return moves
-
     def get_board_score(self):
         count_3 = 0
         for r in range(4):

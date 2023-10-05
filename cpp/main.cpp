@@ -7,35 +7,43 @@ using namespace std;
 
 int main(int argc, const char *argv[]) {
     Gobblet game = Gobblet();
-    game.display();
+    string move, move_in, turn_str;
 
-    game.move("x1a1");
-    game.display();
-    cout << game.is_mate() << endl;
-    game.move("x1b1");
-    game.display();
-    cout << game.is_mate() << endl;
+    while (true) {
+        game.display();
+        turn_str = (game.get_turn()) ? "White" : "Black";
+        cout << "Turn: " << turn_str << endl;
+        cout << "Move: ";
+        cin >> move_in;
 
-    game.move("x1a2");
-    game.display();
-    cout << game.is_mate() << endl;
-    game.move("x1b2");
-    game.display();
-    cout << game.is_mate() << endl;
+        if (move_in == "end") {
+            break;
+        }
 
-    game.move("x1a3");
-    game.display();
-    cout << game.is_mate() << endl;
-    game.move("x1b3");
-    game.display();
-    cout << game.is_mate() << endl;
+        else if (move_in == "undo") {
+            game.undo_move(move);
+        }
 
-    game.move("x1a4");
-    game.display();
-    cout << game.is_mate() << endl;
-    game.move("x1c4");
-    game.display();
-    cout << game.is_mate() << endl;
-    
+        else if (move_in == "ai") {
+            
+        }
+
+        else {
+            move = move_in;
+        }
+
+        if (!game.move(move)) {
+            cout << "Illegal move" << endl;
+            continue;
+        }
+
+        if (game.is_mate()) {
+            game.display();
+            turn_str = (game.get_turn()) ? "Black" : "White";
+            cout << turn_str << " wins!" << endl;
+            break;
+        }
+    }
+
     return 0;
 }

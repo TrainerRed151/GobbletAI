@@ -42,6 +42,7 @@ public:
     bool move(Move coords);
     bool move(std::string alg);
     void undo_move(Move coords);
+    void undo_move(std::string alg);
     std::vector<Move> legal_moves();
 
     int board_evaluation();
