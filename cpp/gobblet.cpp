@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <map>
 #include "gobblet.hpp"
 
 //using namespace std;
@@ -154,9 +155,9 @@ bool Gobblet::move(Move coords) {
     int c2 = coords.to.c;
 
     if (r1 == -1) {
-        int piece = stage[(int) white][c1].back();
+        int piece = stage[not white][c1].back();
         board[r2][c2].push_back(piece);
-        stage[(int) white][c1].pop_back();
+        stage[not white][c1].pop_back();
     }
 
     else {
@@ -168,6 +169,11 @@ bool Gobblet::move(Move coords) {
     white = !white;
     ply += 1;
     return true;
+}
+
+bool Gobblet::move(std::string alg) {
+    Move m = alg_to_coord(alg);
+    return move(m);
 }
 
 /*
@@ -283,57 +289,105 @@ bool Gobblet::move(Move coords) {
 
         return depth, best_score, best_move
 
-    def display(self):
-        cs = 'abcd'
+*/
 
-        print(Fore.WHITE + '  a b c d')
+void Gobblet::display() {
+    std::cout << "  a b c d" << std::endl;
 
-        for r, row in enumerate(self.board[::-1]):
-            print(Fore.WHITE + str(4 - r), end=' ')
-            for stack in row:
-                if not stack:
-                    print(Fore.WHITE + '.', end=' ')
-                elif stack[-1] > 0:
-                    print(Fore.GREEN + str(stack[-1]), end=' ')
-                else:
-                    print(Fore.RED + str(-stack[-1]), end=' ')
+    for (int r = 3; r >= 0; r--) {
+        std::cout << r + 1 << " ";
+        for (int c = 0; c < 4; c++) {
+            if (board[r][c].empty()) {
+                std::cout << ". ";
+            }
 
-            print(Fore.WHITE + f'{4 - r}')
+            else if (board[r][c].back() > 0) {
+                std::cout << "\033[1;32m" << board[r][c].back() << "\033[0m ";
+            }
 
-        print(Fore.WHITE + '  a b c d')
+            else {
+                std::cout << "\033[1;31m" << -board[r][c].back() << "\033[0m ";
+            }
+        }
 
-        for side in self.stage:
-            print(Fore.WHITE + '(', end='')
-            for stack in side:
-                if not stack:
-                    print(Fore.WHITE + '.', end=' ')
-                else:
-                    if stack[-1] > 0:
-                        print(Fore.GREEN + str(stack[-1]), end=' ')
-                    else:
-                        print(Fore.RED + str(-stack[-1]), end=' ')
+        std::cout << r + 1 << std::endl;
+    }
 
-            print(Fore.WHITE + '\b)')
+    std::cout << "  a b c d" << std::endl;
 
-    def get_turn(self):
-        return self.white
+    for (int s = 0; s < 2; s++) {
+        std::cout << "(";
+        for (int i = 0; i < 3; i++) {
+            if (stage[s][i].empty()) {
+                std::cout << ". ";
+            }
 
-    def alg_to_coord(self, alg):
-        letter_to_coord_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
+            else {
+                if (stage[s][i].back() > 0) {
+                    std::cout << "\033[1;32m" << stage[s][i].back() << "\033[0m ";
+                }
 
-        if alg[0] == 'x':
-            r1 = -1
-            c1 = int(alg[1]) - 1
-        else:
-            r1 = int(alg[1]) - 1
-            c1 = letter_to_coord_map[alg[0]]
+                else {
+                    std::cout << "\033[1;31m" << -stage[s][i].back() << "\033[0m ";
+                }
+            }
+        }
 
-        r2 = int(alg[3]) - 1
-        c2 = letter_to_coord_map[alg[2]]
+        std::cout << "\b)" << std::endl;
+    }
+}
 
-        return (r1, c1, r2, c2)
+Move Gobblet::alg_to_coord(std::string alg) {
+    Coord f, t;
+    Move m;
 
-    def coord_to_alg(self, coords):
+    if (alg[0] == 'x') {
+        f.r = -1;
+        f.c = (alg[1] - '0') - 1;
+    }
+
+    else {
+        f.r = (alg[1] - '0') - 1;
+        switch (alg[0]) {
+            case 'a':
+                f.c = 0;
+                break;
+            case 'b':
+                f.c = 1;
+                break;
+            case 'c':
+                f.c = 2;
+                break;
+            case 'd':
+                f.c = 3;
+                break;
+        }
+    }
+
+    t.r = (alg[3] - '0') - 1;
+    switch (alg[2]) {
+        case 'a':
+            t.c = 0;
+            break;
+        case 'b':
+            t.c = 1;
+            break;
+        case 'c':
+            t.c = 2;
+            break;
+        case 'd':
+            t.c = 3;
+            break;
+        }
+
+    m.from = f;
+    m.to = t;
+
+    return m;
+}
+
+/*
+std::string Gobblet::coord_to_alg(Move coords):
         coord_to_letter_map = 'abcd'
 
         if coords[0] == -1:

@@ -40,6 +40,7 @@ public:
     bool is_mate();
 
     bool move(Move coords);
+    bool move(std::string alg);
     void undo_move(Move coords);
     std::vector<Move> legal_moves();
 

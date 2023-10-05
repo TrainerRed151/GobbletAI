@@ -7,19 +7,34 @@ using namespace std;
 
 int main(int argc, const char *argv[]) {
     Gobblet game = Gobblet();
+    game.display();
 
-    Coord f, t;
-    f.r = -1;
-    f.c = 0;
-    t.r = 0;
-    t.c = 0;
+    game.move("x1a1");
+    game.display();
+    cout << game.is_mate() << endl;
+    game.move("x1b1");
+    game.display();
+    cout << game.is_mate() << endl;
 
-    Move m;
-    m.from = f;
-    m.to = t;
+    game.move("x1a2");
+    game.display();
+    cout << game.is_mate() << endl;
+    game.move("x1b2");
+    game.display();
+    cout << game.is_mate() << endl;
 
-    game.move(m);
+    game.move("x1a3");
+    game.display();
+    cout << game.is_mate() << endl;
+    game.move("x1b3");
+    game.display();
+    cout << game.is_mate() << endl;
 
+    game.move("x1a4");
+    game.display();
+    cout << game.is_mate() << endl;
+    game.move("x1c4");
+    game.display();
     cout << game.is_mate() << endl;
     
     return 0;

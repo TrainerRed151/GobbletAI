@@ -1,2 +1,5 @@
-*.pyc
-.python-version
+python/*.pyc
+python/.python-version
+
+cpp/*.o
+cpp/run
