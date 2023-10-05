@@ -22,6 +22,7 @@ int main(int argc, const char *argv[]) {
 
         else if (move_in == "undo") {
             game.undo_move(move);
+            continue;
         }
 
         else if (move_in == "ai") {
