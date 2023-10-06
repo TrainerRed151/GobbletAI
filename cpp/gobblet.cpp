@@ -141,17 +141,19 @@ bool Gobblet::is_mate() {
     return false;
 }
 
-bool Gobblet::move(Move coords) {
-    bool legal = false;
-    for (Move m : legal_moves()) {
-        if (coords == m) {
-            legal = true;
-            break;
+bool Gobblet::move(Move coords, bool ai) {
+    if (!ai) {
+        bool legal = false;
+        for (Move m : legal_moves()) {
+            if (coords == m) {
+                legal = true;
+                break;
+            }
         }
-    }
 
-    if (!legal) {
-        return false;
+        if (!legal) {
+            return false;
+        }
     }
 
     int r1 = coords.from.r;
@@ -176,9 +178,9 @@ bool Gobblet::move(Move coords) {
     return true;
 }
 
-bool Gobblet::move(std::string alg) {
+bool Gobblet::move(std::string alg, bool ai) {
     Move m = alg_to_coord(alg);
-    return move(m);
+    return move(m, ai);
 }
 
 void Gobblet::undo_move(Move coords) {
@@ -363,7 +365,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     }
 
     for (Move m : move_list) {
-        move(m);
+        move(m, true);
         ai_move = negamax(depth - 1, -beta, -alpha, time_limit);
         undo_move(m);
 

@@ -107,8 +107,8 @@ class Gobblet:
 
         return False
 
-    def move(self, coords):
-        if coords not in self.legal_moves():
+    def move(self, coords, ai=False):
+        if not ai and coords not in self.legal_moves():
             return False
 
         r1, c1, r2, c2 = coords
@@ -217,7 +217,7 @@ class Gobblet:
             move_list.insert(0, killer)
 
         for move in move_list:
-            self.move(move)
+            self.move(move, ai=True)
             value, _ = self.negamax(depth - 1, -beta, -alpha, time_limit)
             self.undo_move(move)
             if value is None:

@@ -54,8 +54,8 @@ public:
     bool is_part_of_3_in_a_row(bool color, Coord coord);
     bool is_mate();
 
-    bool move(Move coords);
-    bool move(std::string alg);
+    bool move(Move coords, bool ai);
+    bool move(std::string alg, bool ai);
     void undo_move(Move coords);
     void undo_move(std::string alg);
     std::vector<Move> legal_moves();
