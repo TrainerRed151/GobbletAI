@@ -204,13 +204,18 @@ class Gobblet:
         return best_score, best_move
 
     def ai(self, move_time=TIME_LIMIT):
+        max_depth = 30
+        if move_time < 0:
+            max_depth = -move_time
+            move_time = 300
+
         time_limit = time.time() + move_time
         depth = 1
         color = [-1, 1][self.white]
         best_score, best_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
         best_score *= color
 
-        while True:
+        while depth < max_depth:
             if self.white and best_score == MAX_SCORE:
                 return depth, best_score, best_move
 
@@ -295,13 +300,21 @@ class Gobblet:
 if __name__ == '__main__':
     game = Gobblet()
     coords = None
+    once = False
     move_time = int(sys.argv[1]) if len(sys.argv) == 2 else TIME_LIMIT
+
+    if move_time < 0:
+        once = True
 
     while True:
         game.display()
         turn_str = 'White' if game.get_turn() else 'Black'
         print(f'Turn: {turn_str}')
-        move = input('Move: ')
+        if not once:
+            move = input('Move: ')
+        else:
+            move = 'ai'
+
         if move == 'end':
             print(Fore.RESET)
             break
@@ -322,6 +335,9 @@ if __name__ == '__main__':
         if not game.move(coords):
             print('Illegal move')
             continue
+
+        if once:
+            break
 
         if game.is_mate():
             game.display()

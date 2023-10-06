@@ -9,10 +9,15 @@ using namespace std;
 int main(int argc, const char *argv[]) {
     Gobblet game = Gobblet();
     string alg, move_in, turn_str;
+    bool once = false;
 
     int move_time = 10;
     if (argc == 2) {
         move_time = atoi(argv[1]);
+    }
+
+    if (move_time < 0) {
+        once = true;
     }
         
     while (true) {
@@ -20,7 +25,12 @@ int main(int argc, const char *argv[]) {
         turn_str = (game.get_turn()) ? "White" : "Black";
         cout << "Turn: " << turn_str << endl;
         cout << "Move: ";
-        cin >> move_in;
+        if (!once) {
+            cin >> move_in;
+        }
+        else {
+            move_in = "ai";
+        }
 
         if (move_in == "end") {
             break;
@@ -47,6 +57,10 @@ int main(int argc, const char *argv[]) {
         if (!game.move(alg)) {
             cout << "Illegal move" << endl;
             continue;
+        }
+
+        if (once) {
+            break;
         }
 
         if (game.is_mate()) {

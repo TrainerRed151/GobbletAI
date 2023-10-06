@@ -336,6 +336,13 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
 }
 
 AIMove Gobblet::ai(int move_time) {
+    int max_depth = 30;
+
+    if (move_time < 0) {
+        max_depth = -move_time;
+        move_time = 300;
+    }
+
     int time_limit = std::clock() + move_time*CLOCKS_PER_SEC;
     int depth = 1;
     int color = (white) ? 1 : -1;
@@ -343,7 +350,7 @@ AIMove Gobblet::ai(int move_time) {
     best_ai_move.score *= color;
     best_ai_move.depth = 1;
 
-    while (true) {
+    while (depth < max_depth) {
         if (white && best_ai_move.score == MAX_SCORE) {
             break;
         }
