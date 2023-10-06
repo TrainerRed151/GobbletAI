@@ -37,6 +37,7 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
     int piece = 0;
     bool piece_color;
 
+    #pragma omp parallel for reduction(+:count)
     for (int i = 0; i < 4; i++) {
         if (!board[r][i].empty()) {
             piece = board[r][i].back();
