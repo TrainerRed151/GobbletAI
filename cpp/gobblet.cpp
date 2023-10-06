@@ -273,22 +273,18 @@ std::vector<Move> Gobblet::legal_moves() {
 
 std::string Gobblet::board_hasher() {
     std::string board_string = "";
-    int size;
 
     for (int r = 0; r < 4; r++) {
+        board_string += "[";
         for (int c = 0; c < 4; c++) {
-            size = board[r][c].size();
-            for (int i = 0; i < size; i++) {
-                board_string += std::to_string(board[r][c][i]);
+            board_string += "[";
+            for (int i = 0; i < board[r][c].size(); i++) {
+                board_string += std::to_string(board[r][c][i]) + ",";
             }
-
-            for (int i = 0; i < 4-size; i++) {
-                board_string += "0";
-            }
+            board_string += "]";
         }
+        board_string += "]";
     }
-
-    //return board_string;
 
     for (int c = 0; c < 2; c++) {
         for (int s = 0; s < 3; s++) {
@@ -332,7 +328,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     int alphaOrig = alpha;
 
     std::string zhash = board_hasher();
-    if (transposition_table.count(zhash) > 0) {
+    if (transposition_table.count(zhash)) {
         TTEntry ttEntry = transposition_table[zhash];
         if (ttEntry.ttDEPTH >= depth) {
             if (ttEntry.ttFLAG == TT_EXACT) {
@@ -406,8 +402,8 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
         new_ttEntry.ttFLAG = TT_EXACT;
     }
     new_ttEntry.ttDEPTH = depth;
-    transposition_table.emplace(zhash, new_ttEntry);
-    killer_heuristic_table.emplace(zhash, best_ai_move.move);
+    transposition_table[zhash] = new_ttEntry;
+    killer_heuristic_table[zhash] = best_ai_move.move;
 
     return best_ai_move;
 }
@@ -469,8 +465,6 @@ AIMove Gobblet::ai(int move_time) {
         best_ai_move.move = new_ai_move.move;
         best_ai_move.score = color*new_ai_move.score;
         best_ai_move.depth = depth;
-
-        //std::cout << coord_to_alg(best_ai_move.move) << std::endl;
 
         if (std::abs(best_ai_move.score) == MAX_SCORE) {
             break;
