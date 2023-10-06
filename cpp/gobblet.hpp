@@ -63,6 +63,7 @@ public:
     std::string board_hasher();
     int board_evaluation();
     AIMove negamax(int depth, int alpha, int beta, int time_limit);
+    AIMove MTDf(int depth, int first_guess, int time_limit);
     AIMove ai(int move_time);
 
     Move alg_to_coord(std::string alg);

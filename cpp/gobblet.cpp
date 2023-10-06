@@ -288,6 +288,14 @@ std::string Gobblet::board_hasher() {
         }
     }
 
+    //return board_string;
+
+    for (int c = 0; c < 2; c++) {
+        for (int s = 0; s < 3; s++) {
+            board_string += std::to_string(stage[c][s].back());
+        }
+    }
+
     return board_string;
 }
 
@@ -314,6 +322,7 @@ int Gobblet::board_evaluation() {
 AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     AIMove ai_move;
     ai_move.depth = 0;
+    ai_move.move.from.r = -2;
 
     if (std::clock() > time_limit) {
         ai_move.depth = -1;
@@ -358,7 +367,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     best_ai_move.score = -MAX_SCORE - 1;
 
     std::vector<Move> move_list = legal_moves();
-    if (killer_heuristic_table.count(zhash) > 0) {
+    if (killer_heuristic_table.count(zhash) == 1) {
         Move killer = killer_heuristic_table[zhash];
         std::erase(move_list, killer);
         move_list.insert(move_list.begin(), killer);
@@ -397,9 +406,36 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
         new_ttEntry.ttFLAG = TT_EXACT;
     }
     new_ttEntry.ttDEPTH = depth;
-    transposition_table[zhash] = new_ttEntry;
+    transposition_table.emplace(zhash, new_ttEntry);
+    killer_heuristic_table.emplace(zhash, best_ai_move.move);
 
     return best_ai_move;
+}
+
+AIMove Gobblet::MTDf(int depth, int first_guess, int time_limit) {
+    int g = first_guess;
+    int upperbound = MAX_SCORE;
+    int lowerbound = -MAX_SCORE;
+    int beta;
+    AIMove ai_move;
+
+    while (lowerbound < upperbound) {
+        beta = std::max(g, lowerbound + 1);
+        ai_move = negamax(depth, beta - 1, beta, time_limit);
+
+        if (ai_move.depth == -1) {
+            return ai_move;
+        }
+
+        if (g < beta) {
+            upperbound = g;
+        }
+        else {
+            lowerbound = g;
+        }
+    }
+
+    return ai_move;
 }
 
 AIMove Gobblet::ai(int move_time) {
@@ -414,31 +450,33 @@ AIMove Gobblet::ai(int move_time) {
     killer_heuristic_table.clear();
 
     int time_limit = std::clock() + move_time*CLOCKS_PER_SEC;
-    int depth = 1;
     int color = (white) ? 1 : -1;
-    AIMove best_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit);
-    best_ai_move.score *= color;
-    best_ai_move.depth = 1;
 
-    while (depth < max_depth) {
-        if (white && best_ai_move.score == MAX_SCORE) {
-            break;
-        }
+    AIMove best_ai_move, new_ai_move;
+    best_ai_move.score = 0;
+    best_ai_move.move = legal_moves()[0];
 
-        if (!white && best_ai_move.score == -MAX_SCORE) {
-            break;
-        }
+    int depth = 1;
+    int first_guess = 0;
 
-        depth++;
-        AIMove new_ai_move = negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit);
-
+    while (depth <= max_depth) {
+        new_ai_move = MTDf(depth, first_guess, time_limit);
         if (new_ai_move.depth == -1) {
             break;
         }
 
-        best_ai_move = new_ai_move;
-        best_ai_move.score *= color;
+        first_guess = new_ai_move.score;
+        best_ai_move.move = new_ai_move.move;
+        best_ai_move.score = color*new_ai_move.score;
         best_ai_move.depth = depth;
+
+        //std::cout << coord_to_alg(best_ai_move.move) << std::endl;
+
+        if (std::abs(best_ai_move.score) == MAX_SCORE) {
+            break;
+        }
+
+        depth++;
     }
 
     return best_ai_move;

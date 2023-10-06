@@ -185,7 +185,7 @@ class Gobblet:
 
         alphaOrig = alpha
 
-        zhash = str(self.board)
+        zhash = str([self.board, self.stage])
         ttEntry = self.transposition_table.get(zhash)
         if ttEntry and ttEntry[ttDEPTH] >= depth:
             if ttEntry[ttFLAG] == ttEXACT:
@@ -207,13 +207,12 @@ class Gobblet:
         best_score = -MAX_SCORE - 1
 
         killer = self.killer_heuristic_table.get(zhash)
+        if not killer and depth > 2:
+            _, killer = self.MTDf(depth - 3, alpha, time_limit)
+
         move_list = self.legal_moves()
         if killer:
-            try:
-                move_list.remove(killer)
-            except:
-                pass
-
+            move_list.remove(killer)
             move_list.insert(0, killer)
 
         for move in move_list:
@@ -241,6 +240,7 @@ class Gobblet:
             new_ttEntry[ttFLAG] = ttEXACT
         new_ttEntry[ttDEPTH] = depth
         self.transposition_table[zhash] = new_ttEntry
+        self.killer_heuristic_table[zhash] = killer
 
         return best_score, best_move
 
