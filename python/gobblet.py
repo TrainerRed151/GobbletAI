@@ -205,7 +205,6 @@ class Gobblet:
             return self.get_board_score(), None
 
         best_score = -MAX_SCORE - 1
-        best_move = None
 
         killer = self.killer_heuristic_table.get(zhash)
         move_list = self.legal_moves()
@@ -245,34 +244,54 @@ class Gobblet:
 
         return best_score, best_move
 
+    def MTDf(self, depth, first_guess, time_limit):
+        g = first_guess
+        upperbound = MAX_SCORE
+        lowerbound = -MAX_SCORE
+        while lowerbound < upperbound:
+            beta = max(g, lowerbound + 1)
+            g, move = self.negamax(depth, beta - 1, beta, time_limit)
+
+            if g is None:
+                return None, None
+
+            if g < beta:
+                upperbound = g
+            else:
+                lowerbound = g
+
+        return g, move
+
     def ai(self, move_time=TIME_LIMIT):
         max_depth = 30
         if move_time < 0:
             max_depth = -move_time
             move_time = 300
 
+        self.transposition_table.clear()
+        self.killer_heuristic_table.clear()
+
         time_limit = time.time() + move_time
-        depth = 1
         color = [-1, 1][self.white]
-        best_score, best_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
-        best_score *= color
 
+        best_score = 0
+        best_move = self.legal_moves()[0]
+
+        depth = 1
+        first_guess = 0
         while depth < max_depth:
-            if self.white and best_score == MAX_SCORE:
-                return depth, best_score, best_move
-
-            if not self.white and best_score == -MAX_SCORE:
-                return depth, best_score, best_move
-
-            depth += 1
-            new_score, new_move = self.negamax(depth, -MAX_SCORE, MAX_SCORE, time_limit)
-
-            if new_score is None:
+            first_guess, move = self.MTDf(depth, first_guess, time_limit)
+            if first_guess is None:
                 depth -= 1
                 break
 
-            best_score = color*new_score
-            best_move = new_move
+            best_move = move
+            best_score = color*first_guess
+
+            if abs(best_score) == MAX_SCORE:
+                return depth, best_score, best_move
+
+            depth += 1
 
         return depth, best_score, best_move
 
