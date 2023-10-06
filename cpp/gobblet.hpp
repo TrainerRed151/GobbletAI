@@ -4,9 +4,13 @@
 #define GOBBLET_HPP
 
 #define MAX_SCORE 20
+#define TT_EXACT 0
+#define TT_LOWER 1
+#define TT_UPPER 2
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 struct Coord {
     int r;
@@ -28,11 +32,18 @@ struct AIMove {
     int depth;
 };
 
+struct TTEntry {
+    int ttDEPTH;
+    int ttFLAG;
+    int ttVALUE;
+};
+
 class Gobblet {
 private:
     bool white;
     int ply;
     std::vector<std::vector<std::vector<int>>> board, stage;
+    std::unordered_map<std::string, TTEntry> transposition_table;
 
 public:
     Gobblet();
@@ -48,6 +59,7 @@ public:
     void undo_move(std::string alg);
     std::vector<Move> legal_moves();
 
+    std::string board_hasher();
     int board_evaluation();
     AIMove negamax(int depth, int alpha, int beta, int time_limit);
     AIMove ai(int move_time);

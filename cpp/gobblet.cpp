@@ -269,6 +269,26 @@ std::vector<Move> Gobblet::legal_moves() {
     return moves;
 }
 
+std::string Gobblet::board_hasher() {
+    std::string board_string = "";
+    int size;
+
+    for (int r = 0; r < 4; r++) {
+        for (int c = 0; c < 4; c++) {
+            size = board[r][c].size();
+            for (int i = 0; i < size; i++) {
+                board_string += std::to_string(board[r][c][i]);
+            }
+
+            for (int i = 0; i < 4-size; i++) {
+                board_string += "0";
+            }
+        }
+    }
+
+    return board_string;
+}
+
 int Gobblet::board_evaluation() {
     int count_3 = 0;
     for (int r = 0; r < 4; r++) {
@@ -296,6 +316,30 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     if (std::clock() > time_limit) {
         ai_move.depth = -1;
         return ai_move;
+    }
+
+    int alphaOrig = alpha;
+
+    std::string board_string = board_hasher();
+    if (transposition_table.count(board_string) > 0) {
+        TTEntry ttEntry = transposition_table[board_string];
+        if (ttEntry.ttDEPTH >= depth) {
+            if (ttEntry.ttFLAG == TT_EXACT) {
+                ai_move.score = ttEntry.ttVALUE;
+                return ai_move;
+            }
+            else if (ttEntry.ttFLAG == TT_LOWER) {
+                alpha = std::max(alpha, ttEntry.ttVALUE);
+            }
+            else if (ttEntry.ttFLAG == TT_UPPER) {
+                beta = std::min(beta, ttEntry.ttVALUE);
+            }
+
+            if (alpha >= beta) {
+                ai_move.score = ttEntry.ttVALUE;
+                return ai_move;
+            }
+        }
     }
 
     if (is_mate()) {
@@ -332,6 +376,20 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
         }
     }
 
+    TTEntry new_ttEntry;
+    new_ttEntry.ttVALUE = best_ai_move.score;
+    if (best_ai_move.score <= alphaOrig) {
+        new_ttEntry.ttFLAG = TT_UPPER;
+    }
+    else if (best_ai_move.score >= beta) {
+        new_ttEntry.ttFLAG = TT_LOWER;
+    }
+    else{
+        new_ttEntry.ttFLAG = TT_EXACT;
+    }
+    new_ttEntry.ttDEPTH = depth;
+    transposition_table[board_string] = new_ttEntry;
+
     return best_ai_move;
 }
 
@@ -342,6 +400,8 @@ AIMove Gobblet::ai(int move_time) {
         max_depth = -move_time;
         move_time = 300;
     }
+
+    transposition_table.clear();
 
     int time_limit = std::clock() + move_time*CLOCKS_PER_SEC;
     int depth = 1;
