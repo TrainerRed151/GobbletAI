@@ -44,6 +44,7 @@ private:
     int ply;
     std::vector<std::vector<std::vector<int>>> board, stage;
     std::unordered_map<std::string, TTEntry> transposition_table;
+    std::unordered_map<std::string, Move> killer_heuristic_table;
 
 public:
     Gobblet();

@@ -320,9 +320,9 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
 
     int alphaOrig = alpha;
 
-    std::string board_string = board_hasher();
-    if (transposition_table.count(board_string) > 0) {
-        TTEntry ttEntry = transposition_table[board_string];
+    std::string zhash = board_hasher();
+    if (transposition_table.count(zhash) > 0) {
+        TTEntry ttEntry = transposition_table[zhash];
         if (ttEntry.ttDEPTH >= depth) {
             if (ttEntry.ttFLAG == TT_EXACT) {
                 ai_move.score = ttEntry.ttVALUE;
@@ -355,7 +355,14 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     AIMove best_ai_move;
     best_ai_move.score = -MAX_SCORE - 1;
 
-    for (Move m : legal_moves()) {
+    std::vector<Move> move_list = legal_moves();
+    if (killer_heuristic_table.count(zhash) > 0) {
+        Move killer = killer_heuristic_table[zhash];
+        std::erase(move_list, killer);
+        move_list.insert(move_list.begin(), killer);
+    }
+
+    for (Move m : move_list) {
         move(m);
         ai_move = negamax(depth - 1, -beta, -alpha, time_limit);
         undo_move(m);
@@ -388,7 +395,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
         new_ttEntry.ttFLAG = TT_EXACT;
     }
     new_ttEntry.ttDEPTH = depth;
-    transposition_table[board_string] = new_ttEntry;
+    transposition_table[zhash] = new_ttEntry;
 
     return best_ai_move;
 }
@@ -402,6 +409,7 @@ AIMove Gobblet::ai(int move_time) {
     }
 
     transposition_table.clear();
+    killer_heuristic_table.clear();
 
     int time_limit = std::clock() + move_time*CLOCKS_PER_SEC;
     int depth = 1;
