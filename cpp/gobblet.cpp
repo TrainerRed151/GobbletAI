@@ -224,18 +224,12 @@ std::vector<Move> Gobblet::legal_moves() {
         piece = stage[!white][i].back();
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < 4; c++) {
-                Coord t; t.r = r; t.c = c;
-
                 if (board[r][c].empty()) {
-                    Coord f; f.r = -1; f.c = i;
-                    Move m; m.from = f; m.to = t;
-                    moves.push_back(m);
+                    moves.push_back({{-1, i}, {r, c}});
                 }
 
-                else if (std::abs(piece) > std::abs(board[r][c].back()) && is_part_of_3_in_a_row(opponent, t)) {
-                    Coord f; f.r = -1; f.c = i;
-                    Move m; m.from = f; m.to = t;
-                    moves.push_back(m);
+                else if (std::abs(piece) > std::abs(board[r][c].back()) && is_part_of_3_in_a_row(opponent, {r, c})) {
+                    moves.push_back({{-1, i}, {r, c}});
                 }
             }
         }
@@ -250,17 +244,11 @@ std::vector<Move> Gobblet::legal_moves() {
                     for (int r2 = 0; r2 < 4; r2++) {
                         for (int c2 = 0; c2 < 4; c2++) {
                             if (board[r2][c2].empty()) {
-                                Coord f; f.r = r; f.c = c;
-                                Coord t; t.r = r2; t.c = c2;
-                                Move m; m.from = f; m.to = t;
-                                moves.push_back(m);
+                                moves.push_back({{r, c}, {r2, c2}});
                             }
 
                             else if (std::abs(piece) > std::abs(board[r2][c2].back())) {
-                                Coord f; f.r = r; f.c = c;
-                                Coord t; t.r = r2; t.c = c2;
-                                Move m; m.from = f; m.to = t;
-                                moves.push_back(m);
+                                moves.push_back({{r, c}, {r2, c2}});
                             }
                         }
                     }
@@ -277,7 +265,7 @@ int Gobblet::board_evaluation() {
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 4; c++) {
             if (!board[r][c].empty()) {
-                Coord coord; coord.r = r; coord.c = c;
+                Coord coord = {r, c};
                 if (is_part_of_3_in_a_row(true, coord)) {
                     count_3 += 1;
                 }
@@ -293,27 +281,24 @@ int Gobblet::board_evaluation() {
 }
 
 AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
-    AIMove ai_move;
-    ai_move.depth = 0;
+    AIMove best_ai_move = {{{-2, -2}, {-2, -2}}, -MAX_SCORE-1, 0};
 
     if (std::clock() > time_limit) {
-        ai_move.depth = -1;
-        return ai_move;
+        best_ai_move.depth = -1;
+        return best_ai_move;
     }
 
     if (is_mate()) {
-        ai_move.score = -MAX_SCORE;
-        return ai_move;
+        best_ai_move.score = -MAX_SCORE;
+        return best_ai_move;
     }
 
     if (depth == 0) {
-        ai_move.score = board_evaluation();
-        return ai_move;
+        best_ai_move.score = board_evaluation();
+        return best_ai_move;
     }
 
-    AIMove best_ai_move;
-    best_ai_move.score = -MAX_SCORE - 1;
-
+    AIMove ai_move = {{{-2, -2}, {-2, -2}}, -MAX_SCORE-1, 0};
     for (Move m : legal_moves()) {
         move(m, true);
         ai_move = negamax(depth - 1, -beta, -alpha, time_limit);
@@ -443,6 +428,8 @@ Move Gobblet::alg_to_coord(std::string alg) {
             case 'd':
                 f.c = 3;
                 break;
+            default:
+                f.c = -2;
         }
     }
 
@@ -460,6 +447,8 @@ Move Gobblet::alg_to_coord(std::string alg) {
         case 'd':
             t.c = 3;
             break;
+        default:
+            t.c = -2;
         }
 
     m.from = f;
