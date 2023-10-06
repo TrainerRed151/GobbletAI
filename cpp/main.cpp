@@ -54,7 +54,7 @@ int main(int argc, const char *argv[]) {
             alg = move_in;
         }
 
-        if (!game.move(alg)) {
+        if (!game.move(alg, false)) {
             cout << "Illegal move" << endl;
             continue;
         }

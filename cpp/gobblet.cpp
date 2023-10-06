@@ -141,17 +141,19 @@ bool Gobblet::is_mate() {
     return false;
 }
 
-bool Gobblet::move(Move coords) {
-    bool legal = false;
-    for (Move m : legal_moves()) {
-        if (coords == m) {
-            legal = true;
-            break;
+bool Gobblet::move(Move coords, bool ai) {
+    if (!ai) {
+        bool legal = false;
+        for (Move m : legal_moves()) {
+            if (coords == m) {
+                legal = true;
+                break;
+            }
         }
-    }
 
-    if (!legal) {
-        return false;
+        if (!legal) {
+            return false;
+        }
     }
 
     int r1 = coords.from.r;
@@ -176,9 +178,9 @@ bool Gobblet::move(Move coords) {
     return true;
 }
 
-bool Gobblet::move(std::string alg) {
+bool Gobblet::move(std::string alg, bool ai) {
     Move m = alg_to_coord(alg);
-    return move(m);
+    return move(m, ai);
 }
 
 void Gobblet::undo_move(Move coords) {
@@ -312,7 +314,7 @@ AIMove Gobblet::negamax(int depth, int alpha, int beta, int time_limit) {
     best_ai_move.score = -MAX_SCORE - 1;
 
     for (Move m : legal_moves()) {
-        move(m);
+        move(m, true);
         ai_move = negamax(depth - 1, -beta, -alpha, time_limit);
         undo_move(m);
 
@@ -351,11 +353,7 @@ AIMove Gobblet::ai(int move_time) {
     best_ai_move.depth = 1;
 
     while (depth < max_depth) {
-        if (white && best_ai_move.score == MAX_SCORE) {
-            break;
-        }
-
-        if (!white && best_ai_move.score == -MAX_SCORE) {
+        if (std::abs(best_ai_move.score) == MAX_SCORE) {
             break;
         }
 

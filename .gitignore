@@ -3,3 +3,5 @@ python/.python-version
 
 cpp/*.o
 cpp/run
+
+*.pgn
