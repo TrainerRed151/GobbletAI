@@ -213,7 +213,8 @@ std::vector<Move> Gobblet::legal_moves() {
     bool opponent = !white;
     int piece;
     bool color;
-    std::vector<Move> moves = {};
+    std::vector<Move> moves;
+    moves.reserve(300);
 
     for (int i = 0; i < 3; i++) {
         if (stage[!white][i].empty()) {
