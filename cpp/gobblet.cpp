@@ -37,7 +37,6 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
     int piece = 0;
     bool piece_color;
 
-    #pragma omp parallel for reduction(+:count)
     for (int i = 0; i < 4; i++) {
         if (!board[r][i].empty()) {
             piece = board[r][i].back();
@@ -216,6 +215,7 @@ std::vector<Move> Gobblet::legal_moves() {
     bool color;
     std::vector<Move> moves = {};
 
+    //#pragma omp parallel for num_threads(3)
     for (int i = 0; i < 3; i++) {
         if (stage[!white][i].empty()) {
             continue;
@@ -241,6 +241,7 @@ std::vector<Move> Gobblet::legal_moves() {
         }
     }
 
+    //#pragma omp parallel for num_threads(4)
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 4; c++) {
             if (!board[r][c].empty()) {
@@ -274,6 +275,7 @@ std::vector<Move> Gobblet::legal_moves() {
 
 int Gobblet::board_evaluation() {
     int count_3 = 0;
+    #pragma omp parallel for reduction(+:count_3) num_threads(4)
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 4; c++) {
             if (!board[r][c].empty()) {
