@@ -279,20 +279,20 @@ class Gobblet:
 
         depth = 1
         first_guess = 0
-        while depth < max_depth:
+        while depth <= max_depth:
             first_guess, move = self.MTDf(depth, first_guess, time_limit)
             if first_guess is None:
-                depth -= 1
                 break
 
             best_move = move
             best_score = color*first_guess
 
             if abs(best_score) == MAX_SCORE:
-                return depth, best_score, best_move
+                break
 
             depth += 1
 
+        depth -= 1
         return depth, best_score, best_move
 
     def display(self):
