@@ -45,10 +45,10 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
                 count += 1;
             }
         }
-    }
 
-    if (count >= 3) {
-        return true;
+        if (count == 3) {
+            return true;
+        }
     }
 
     count = 0;
@@ -60,10 +60,10 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
                 count += 1;
             }
         }
-    }
 
-    if (count >= 3) {
-        return true;
+        if (count == 3) {
+            return true;
+        }
     }
 
     if (r == c) {
@@ -76,10 +76,10 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
                     count += 1;
                 }
             }
-        }
 
-        if (count >= 3) {
-            return true;
+            if (count == 3) {
+                return true;
+            }
         }
     }
 
@@ -93,10 +93,10 @@ bool Gobblet::is_part_of_3_in_a_row(bool color, Coord coord) {
                     count += 1;
                 }
             }
-        }
 
-        if (count >= 3) {
-            return true;
+            if (count == 3) {
+                return true;
+            }
         }
     }
 
