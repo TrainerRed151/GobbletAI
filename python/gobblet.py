@@ -7,6 +7,9 @@ from colorama import Fore
 TIME_LIMIT = 10
 MAX_SCORE = 20
 
+ttDEPTH, ttFLAG, ttVALUE = 0, 1, 2
+ttEXACT, ttLOWERBOUND, ttUPPERBOUND = 0, 1, 2
+
 
 class Gobblet:
     def __init__(self):
@@ -17,6 +20,9 @@ class Gobblet:
         ]
         self.white = True
         self.ply = 0
+
+        self.transposition_table = {}
+        self.killer_heuristic_table = {}
 
     def is_part_of_3_in_a_row(self, color, coord):
         r = coord[0]
@@ -177,6 +183,21 @@ class Gobblet:
         if time.time() > time_limit:
             return None, None
 
+        alphaOrig = alpha
+
+        zhash = str(self.board)
+        ttEntry = self.transposition_table.get(zhash)
+        if ttEntry and ttEntry[ttDEPTH] >= depth:
+            if ttEntry[ttFLAG] == ttEXACT:
+                return ttEntry[ttVALUE], None
+            elif ttEntry[ttFLAG] == ttLOWERBOUND:
+                alpha = max(alpha, ttEntry[ttVALUE])
+            elif ttEntry[ttFLAG] == ttUPPERBOUND:
+                beta = min(beta, ttEntry[ttVALUE])
+
+            if alpha >= beta:
+                return ttEntry[ttVALUE], None
+
         if self.is_mate():
             return -MAX_SCORE, None
 
@@ -186,7 +207,17 @@ class Gobblet:
         best_score = -MAX_SCORE - 1
         best_move = None
 
-        for move in self.legal_moves():
+        killer = self.killer_heuristic_table.get(zhash)
+        move_list = self.legal_moves()
+        if killer:
+            try:
+                move_list.remove(killer)
+            except:
+                pass
+
+            move_list.insert(0, killer)
+
+        for move in move_list:
             self.move(move)
             value, _ = self.negamax(depth - 1, -beta, -alpha, time_limit)
             self.undo_move(move)
@@ -200,6 +231,17 @@ class Gobblet:
             alpha = max(value, alpha)
             if alpha >= beta:
                 break
+
+        new_ttEntry = [0, 0, 0]
+        new_ttEntry[ttVALUE] = best_score
+        if best_score <= alphaOrig:
+            new_ttEntry[ttFLAG] = ttUPPERBOUND
+        elif best_score >= beta:
+            new_ttEntry[ttFLAG] = ttLOWERBOUND
+        else:
+            new_ttEntry[ttFLAG] = ttEXACT
+        new_ttEntry[ttDEPTH] = depth
+        self.transposition_table[zhash] = new_ttEntry
 
         return best_score, best_move
 
